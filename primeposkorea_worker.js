@@ -329,7 +329,7 @@ function htmlResp(b){ return new Response(b,{headers:{"cache-control":"public, m
 const HTML_CACHE_SEC = 21600;
 /* 캐시 키에 버전을 붙인다. 본문을 고친 뒤 이 값을 올리면 이전 엣지 캐시가
    즉시 무시된다 (캐시 비우기 API 권한이 없어도 배포만으로 무효화된다). */
-const HTML_CACHE_VER = "12";
+const HTML_CACHE_VER = "13";   /* 2026-09-17 푸터에 /post/ 링크 추가 */
 function edgeCache(){ return (typeof caches !== "undefined" && caches.default) ? caches.default : null; }
 function htmlCacheKey(request){
   try { const u = new URL(request.url); u.searchParams.set("_cv", HTML_CACHE_VER); return new Request(u.toString(), { method: "GET" }); }
@@ -1924,7 +1924,7 @@ footer{padding:24px 0;font-size:13px;color:var(--mute);border-top:1px solid var(
 `;
 
 const REGION_HEADER = `<header><div class="nav"><a class="logo" href="/"><span class="lp">PRIME</span><span class="ls">pos</span></a><a class="call" href="tel:${PHONE_RAW}">📞 전화 상담</a></div></header>`;
-const REGION_FOOTER = `<footer><div class="wrap">${SITE_NAME} · 상담 평일 09\u201318시 · 전화·문자 버튼으로 문의</div></footer>`;
+const REGION_FOOTER = `<footer><div class="wrap"><a href="/post/" style="color:inherit;text-decoration:underline">단말기 정보</a> · <a href="/list" style="color:inherit;text-decoration:underline">전체 목록</a><br>${SITE_NAME} · 상담 평일 09\u201318시 · 전화·문자 버튼으로 문의</div></footer>`;
 const REGION_FLOAT  = `<div class="fl"><a class="tel" href="tel:${PHONE_RAW}" aria-label="전화">📞</a><a class="sms" href="sms:${PHONE_RAW}" aria-label="문자">💬</a></div>`;
 
 /* 상담 CTA — dong-sample 의 .cta 박스 */
@@ -1947,7 +1947,7 @@ function poolVars(sido,gugun,dong){ return {sido:sido,gugun:gugun,dong:dong,tel:
 function poolFaq(slug,v,names){ return poolFaqList(slug,v).map(x=>({q:fixJosa(x.q,names),a:fixJosa(x.a,names)})); }
 
 // ---- 공통 페이지 셸 (_design/primeposkorea-dong-sample.html 레이아웃) ----
-function shell({title,desc,canonical,ogimg,crumb,h1,metaArea,leadText,bodyMain,seedStr,areaServed,trail,faq}){
+function shell({title,desc,canonical,ogimg,crumb,h1,metaArea,leadText,bodyMain,seedStr,areaServed,trail,faq,noHero,dateline}){
   const pub=pubDate(seedStr), mod=modDate();
   /* 화면 제목에는 두되, 구조화 데이터에서는 키워드를 한 번 더 반복하지 않는다 */
   const titleLd=title.replace("·토스단말기","");
@@ -1981,8 +1981,8 @@ ${REGION_HEADER}
   <div class="crumb">${crumb}</div>
   <div class="top">
     <h1>${h1}</h1>
-    <div class="meta"><span>발행 ${ymdK(pub)}</span><span>수정 ${ymdK(mod)}</span><span>${esc(metaArea)}</span></div>
-    <div class="thumb"><img src="${ogimg}" alt="${esc(areaServed)} 카드단말기 설치" loading="eager" width="1200" height="628"></div>
+    ${dateline!==undefined?dateline:`<div class="meta"><span>발행 ${ymdK(pub)}</span><span>수정 ${ymdK(mod)}</span><span>${esc(metaArea)}</span></div>`}
+    ${noHero?"":`<div class="thumb"><img src="${ogimg}" alt="${esc(areaServed)} 카드단말기 설치" loading="eager" width="1200" height="628"></div>`}
   </div>
 
   <article>${leadText?`<p class="lead">${esc(leadText)}</p>`:""}${bodyMain}</article>
@@ -2389,6 +2389,7 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
 </div></section>
 
 <footer><div class="wrap">
+  <span><a href="/post/" style="color:inherit;text-decoration:underline">단말기 정보</a> · <a href="/list" style="color:inherit;text-decoration:underline">전체 목록</a></span>
   <span>${SITE_NAME} · 유선·무선 카드단말기 설치 상담</span>
   <span>상담 평일 09–18시 · 전화·문자 버튼으로 문의</span>
 </div></footer>
@@ -2469,22 +2470,28 @@ function smAddLastmod(xml){
    ③ Cache API 로 엣지에 올려 다음 요청은 워커 실행 자체를 건너뛴다.
    lastmod 는 smLastmod 가 날짜 단위로만 바뀌므로 하루 캐시해도 값이 어긋나지 않는다. */
 let smCacheDay = -1, smCacheBody = null;
+let smCacheVer = "";
 function sitemapBody(){
   const day = Math.floor(Date.now()/SM_DAY);
-  if(smCacheDay === day && smCacheBody) return smCacheBody;
+  /* 글이 늘면 하루짜리 메모를 버린다 — 안 그러면 새 글이 사이트맵에 안 뜬다 */
+  const ver = postVer();
+  if(smCacheDay === day && smCacheVer === ver && smCacheBody) return smCacheBody;
   const loc = u => `<url><loc>${u}</loc><lastmod>${smLastmod(u)}</lastmod></url>`;
-  let u = loc(SITE+"/") + loc(SITE+"/list") + loc(SITE+"/region") + loc(SITE+"/sitemap-regions");
+  let u = postSitemapXml() + loc(SITE+"/") + loc(SITE+"/list") + loc(SITE+"/region") + loc(SITE+"/sitemap-regions");
   for(const s of sidoList) u += loc(`${SITE}/region/${s.ss}`);
   for(const [ss,arr] of gugunOf) for(const g of arr) u += loc(`${SITE}/region/${ss}/${g.gg}`);
   for(const r of REGIONS) u += loc(`${SITE}/region/${r.url}`);
   smCacheBody = `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${u}</urlset>`;
-  smCacheDay = day;
+  smCacheDay = day; smCacheVer = ver;
   return smCacheBody;
 }
 async function sitemap(request, ctx){
   const cache = (typeof caches !== "undefined" && caches.default) ? caches.default : null;
+  /* 캐시 키에 글 버전을 붙인다 — 6시간 캐시가 새 글을 막지 않게 */
+  let ckey = request;
+  try { const cu = new URL(request.url); cu.searchParams.set("_pv", postVer()); ckey = new Request(cu.toString(), { method: "GET" }); } catch(e){}
   if(cache && request && request.method === "GET"){
-    const hit = await cache.match(request);
+    const hit = await cache.match(ckey);
     if(hit) return hit;
   }
   const res = new Response(sitemapBody(), {headers:{
@@ -2492,7 +2499,7 @@ async function sitemap(request, ctx){
     "cache-control":"public, max-age=21600"
   }});
   if(cache && request && request.method === "GET" && ctx && ctx.waitUntil)
-    ctx.waitUntil(cache.put(request, res.clone()));
+    ctx.waitUntil(cache.put(ckey, res.clone()));
   return res;
 }
 function llms(){
@@ -2585,6 +2592,111 @@ function atomFromRss(xml, selfUrl){
   }
   return x+"</feed>";
 }
+
+/* ===================== 정보성 글 (/post) =====================
+   글은 공용 D1 posts 테이블에 있고 이 사이트는 자기 글(published)만 읽는다.
+   발행 전환은 allcarestudy 워커의 크론 한 곳에서만 한다.
+
+   목록은 메모리에 5분 캐시한다 — 사이트맵·RSS·목록이 매 요청 D1 을 치면
+   응답이 느려지고 D1 읽기도 낭비된다. 본문은 상세 요청에서만 읽는다.
+   사이트맵·RSS 생성 함수는 동기라 인자로 넘기지 않고 이 캐시를 직접 읽는다.
+   (라우터가 응답을 만들기 직전 await loadPosts(env) 로 채워 준다) */
+const POST_SITE = "primeposkorea";
+const POST_ORIGIN = SITE;
+const POST_TTL = 300000;
+let POSTS_CACHE = { at: 0, rows: [] };
+async function loadPosts(env) {
+  if (Date.now() - POSTS_CACHE.at < POST_TTL) return POSTS_CACHE.rows;
+  if (!env || !env.DB) return POSTS_CACHE.rows;
+  try {
+    const r = await env.DB.prepare(
+      "SELECT slug,title,summary,published_at FROM posts WHERE site=? AND status='published' ORDER BY published_at DESC LIMIT 200"
+    ).bind(POST_SITE).all();
+    POSTS_CACHE = { at: Date.now(), rows: r.results || [] };
+  } catch (e) { POSTS_CACHE = { at: Date.now(), rows: POSTS_CACHE.rows }; }
+  return POSTS_CACHE.rows;
+}
+async function getPost(env, slug) {
+  if (!env || !env.DB) return null;
+  try {
+    return await env.DB.prepare(
+      "SELECT slug,title,summary,body_html,published_at FROM posts WHERE site=? AND slug=? AND status='published'"
+    ).bind(POST_SITE, slug).first();
+  } catch (e) { return null; }
+}
+const postEsc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g,
+  (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const postDate = (p) => String((p && p.published_at) || "").slice(0, 10);
+
+/* 목록·상세 본문 — 사이트 CSS 에 의존하지 않도록 인라인 스타일만 쓴다.
+   바깥 컨테이너만 그 사이트의 클래스를 그대로 빌린다(고정 헤더 여백 때문). */
+function postCards(posts) {
+  if (!posts.length) return '<p style="color:#666">아직 등록된 글이 없습니다.</p>';
+  return posts.map((p) =>
+    '<a href="/post/' + postEsc(p.slug) + '/" style="display:block;background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:20px 22px;margin-bottom:12px">'
+    + '<div style="font-size:17px;font-weight:800;line-height:1.4">' + postEsc(p.title) + '</div>'
+    + '<p style="font-size:14px;color:#555;line-height:1.7;margin:8px 0 0">' + postEsc(p.summary || "") + '</p>'
+    + '<div style="font-size:12px;color:#999;margin-top:8px">' + postEsc(postDate(p)) + '</div></a>').join("");
+}
+function postArticle(p) {
+  return '<div style="font-size:12px;color:#999;margin-bottom:18px">' + postEsc(postDate(p)) + ' · 프라임포스</div>'
+    + '<div class="post-body" style="font-size:15px;line-height:1.85;color:#333">' + p.body_html + '</div>'
+    + '<style>.post-body h2{font-size:19px;font-weight:800;line-height:1.4;margin:32px 0 12px;color:#111}'
+    + '.post-body h3{font-size:16px;font-weight:700;margin:22px 0 8px;color:#111}'
+    + '.post-body p{margin:0 0 14px}</style>';
+}
+
+/* 사이트맵·RSS 조각 — lastmod·pubDate 는 실제 발행일을 쓴다
+   (지역 페이지처럼 해시로 돌리면 글의 신선도 신호가 사라진다) */
+function postSitemapXml() {
+  const ps = POSTS_CACHE.rows || [];
+  const top = ps.length ? postDate(ps[0]) : new Date().toISOString().slice(0, 10);
+  return '<url><loc>' + POST_ORIGIN + '/post/</loc><lastmod>' + top + '</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>'
+    + ps.map((p) => '<url><loc>' + POST_ORIGIN + '/post/' + p.slug + '/</loc><lastmod>' + postDate(p)
+      + '</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>').join("");
+}
+function postRssXml() {
+  return (POSTS_CACHE.rows || []).map((p) => {
+    const dt = p.published_at ? new Date(p.published_at) : new Date();
+    const u = POST_ORIGIN + '/post/' + postEsc(p.slug) + '/';
+    return '<item><title>' + postEsc(p.title) + '</title><link>' + u + '</link>'
+      + '<guid isPermaLink="true">' + u + '</guid><pubDate>' + dt.toUTCString() + '</pubDate>'
+      + '<description>' + postEsc(p.summary || p.title) + '</description></item>';
+  }).join("");
+}
+/* 캐시 무효화 토큰 — 사이트맵을 Cache API 에 넣는 사이트는 키에 이 값을 붙인다.
+   글이 늘거나 새로 발행되면 값이 바뀌어 하루짜리 캐시를 기다리지 않아도 된다. */
+function postVer() {
+  const ps = POSTS_CACHE.rows || [];
+  return ps.length ? ps.length + "-" + postDate(ps[0]) : "0";
+}
+/* IndexNow — 최근 7일 안에 발행된 글은 배치 앞에 실어 색인을 앞당긴다 */
+function postFreshUrls() {
+  const fresh = (POSTS_CACHE.rows || [])
+    .filter((p) => p.published_at && Date.now() - Date.parse(p.published_at) < 7 * 86400000)
+    .map((p) => POST_ORIGIN + '/post/' + p.slug + '/');
+  return fresh.length ? fresh.concat([POST_ORIGIN + '/post/']) : [];
+}
+
+function pagePostList(posts) {
+  return shell({ title: `단말기 정보 | ${SITE_NAME}`,
+    desc: `카드단말기·포스기를 들이고 쓰는 데 필요한 정보를 정리했습니다. 수수료 구조, 설치 절차, 업종별 장비 선택까지 ${SITE_NAME}가 한 편씩 올리는 매장 결제 안내입니다.`,
+    canonical: SITE + "/post/", ogimg: "", noHero: true, dateline: "",
+    crumb: `<a href="/">홈</a> › 단말기 정보`, h1: "단말기 정보", metaArea: "전국",
+    leadText: "카드단말기·포스기를 들일 때 사장님들이 실제로 묻는 것을 한 편씩 정리합니다. 수수료 구조, 설치 절차, 업종별 장비 고르는 법을 다룹니다.",
+    bodyMain: postCards(posts), seedStr: "post", areaServed: "전국",
+    trail: [{ n: "홈", u: "/" }, { n: "단말기 정보", u: "/post/" }] });
+}
+function pagePost(p) {
+  return shell({ title: `${p.title} | ${SITE_NAME}`, desc: (p.summary || p.title),
+    canonical: SITE + "/post/" + p.slug + "/", ogimg: "", noHero: true, dateline: "",
+    crumb: `<a href="/">홈</a> › <a href="/post/">단말기 정보</a> › ${postEsc(p.title)}`,
+    h1: postEsc(p.title), metaArea: "전국", leadText: "",
+    bodyMain: postArticle(p) + '<p style="margin-top:26px"><a href="/post/">단말기 정보 전체</a> · <a href="/list">전체 목록</a> · <a href="/region">지역별 설치</a></p>',
+    seedStr: p.slug, areaServed: "전국",
+    trail: [{ n: "홈", u: "/" }, { n: "단말기 정보", u: "/post/" }, { n: p.title, u: "/post/" + p.slug + "/" }] });
+}
+
 function rss(){
   const now=modDate().toUTCString();
   /* 최근 항목 위주로 매일 회전 */
@@ -2601,7 +2713,7 @@ function rss(){
 <description>전국 시·도, 시·군·구별 카드단말기 판매·설치 안내</description>
 <language>ko</language>
 <lastBuildDate>${now}</lastBuildDate>
-${items}
+${postRssXml()}${items}
 </channel></rss>`;
   return new Response(xml,{headers:{"content-type":"application/rss+xml; charset=UTF-8"}});
 }
@@ -2630,10 +2742,12 @@ function blockScraper(request){
 export default {
   /* 매일 1회 IndexNow 자동 제출. URL 이 많아 하루 1,000개씩 돌아가며 보낸다 */
   async scheduled(event, env, ctx){
+    try{ POSTS_CACHE.at=0; await loadPosts(env); }catch(e){}
     const all=indexnowUrls(), PER=1000;
     const day=Math.floor(Date.now()/86400000);
     const start=all.length?(day*PER)%all.length:0;
-    ctx.waitUntil(submitIndexNow(all.slice(start,start+PER)));
+    /* 최근 7일 안에 발행된 글은 배치 앞에 실어 색인을 앞당긴다 */
+    ctx.waitUntil(submitIndexNow(postFreshUrls().concat(all.slice(start,start+PER))));
   },
   async fetch(request, env, ctx){
     const __blk = blockScraper(request); if(__blk) return __blk;
@@ -2668,6 +2782,15 @@ const __ua=request.headers.get("User-Agent")||"";if(!TG_BOT_RE.test(__ua)&&TG_LA
       const res=await submitIndexNow(list);
       return new Response(JSON.stringify({requested:list.length,sent:res.sent,failed:res.failed,batches:res.batches,diag:res.diag}),{headers:{"content-type":"application/json; charset=UTF-8"}});
     }
+    /* 정보성 글 — 지역 슬러그 판정보다 앞. 위 엣지 캐시 목록에 넣지 않아 캐시를 타지 않는다 */
+    if(path==="/post") return new Response(pagePostList(await loadPosts(env)),{headers:{"content-type":"text/html; charset=UTF-8","cache-control":"public, max-age=300"}});
+    if(path.startsWith("/post/")){
+      const __s=path.slice(6);
+      if(__s && __s.indexOf("/")<0){ const __p=await getPost(env,__s); if(__p) return new Response(pagePost(__p),{headers:{"content-type":"text/html; charset=UTF-8","cache-control":"public, max-age=3600"}}); }
+      return new Response("404 Not Found",{status:404,headers:{"content-type":"text/plain; charset=UTF-8"}});
+    }
+    /* 사이트맵·RSS 생성 함수는 동기라 POSTS_CACHE 를 먼저 채워 준다 */
+    if(path.startsWith("/sitemap")||path==="/rss.xml"||path==="/rss"||path==="/atom.xml"||path==="/atom") await loadPosts(env);
     if(path==="/sitemap.xml") return sitemap(request, ctx);
     if(path==="/robots.txt") return robots();
     if(path==="/llms.txt") return llms();
