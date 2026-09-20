@@ -329,7 +329,7 @@ function htmlResp(b){ return new Response(b,{headers:{"cache-control":"public, m
 const HTML_CACHE_SEC = 21600;
 /* 캐시 키에 버전을 붙인다. 본문을 고친 뒤 이 값을 올리면 이전 엣지 캐시가
    즉시 무시된다 (캐시 비우기 API 권한이 없어도 배포만으로 무효화된다). */
-const HTML_CACHE_VER = "13";   /* 2026-09-17 푸터에 /post/ 링크 추가 */
+const HTML_CACHE_VER = "14";   /* 2026-09-20 모바일 플로팅 버튼 위치 변경 */
 function edgeCache(){ return (typeof caches !== "undefined" && caches.default) ? caches.default : null; }
 function htmlCacheKey(request){
   try { const u = new URL(request.url); u.searchParams.set("_cv", HTML_CACHE_VER); return new Request(u.toString(), { method: "GET" }); }
@@ -1893,6 +1893,8 @@ details p{padding:0 16px 14px;color:var(--mute);font-size:14px;margin:0}
 .near a:hover{background:var(--green);color:#fff;border-color:var(--green)}
 footer{padding:24px 0;font-size:13px;color:var(--mute);border-top:1px solid var(--line)}
 .fl{position:fixed;right:18px;bottom:18px;display:flex;flex-direction:column;gap:10px;z-index:30}
+/* 모바일: 하단 우측은 브라우저 툴바·홈 인디케이터·스크롤 동선과 겹쳐 오터치가 난다 → 화면 세로 중앙 우측으로 */
+@media(max-width:768px){.fl{top:50%;bottom:auto;transform:translateY(-50%);gap:12px}}
 .fl a{width:58px;height:58px;border-radius:50%;display:grid;place-items:center;font-size:22px;box-shadow:0 12px 24px -8px rgba(0,0,0,.4)}
 .fl .tel{background:var(--green);color:#fff}.fl .sms{background:var(--amber)}
 @media(max-width:600px){.pick{grid-template-columns:1fr}.fl{right:0;left:0;bottom:0;flex-direction:row;gap:0}.fl a{flex:1;border-radius:0;font-size:16px;font-weight:800}.fl .tel:after{content:"전화 상담"}.fl .sms:after{content:"문자 문의"}body{padding-bottom:58px}}
@@ -2267,6 +2269,8 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
 
 /* floating */
 .fl{position:fixed;right:18px;bottom:18px;display:flex;flex-direction:column;gap:10px;z-index:30}
+/* 모바일: 하단 우측은 브라우저 툴바·홈 인디케이터·스크롤 동선과 겹쳐 오터치가 난다 → 화면 세로 중앙 우측으로 */
+@media(max-width:768px){.fl{top:50%;bottom:auto;transform:translateY(-50%);gap:12px}}
 .fl a{width:58px;height:58px;border-radius:50%;display:grid;place-items:center;font-size:22px;box-shadow:0 12px 24px -8px rgba(0,0,0,.4)}
 .fl .tel{background:var(--green);color:#fff}
 .fl .sms{background:var(--amber);color:var(--ink)}
