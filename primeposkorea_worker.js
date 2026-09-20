@@ -1897,7 +1897,7 @@ footer{padding:24px 0;font-size:13px;color:var(--mute);border-top:1px solid var(
 @media(max-width:768px){.fl{top:50%;bottom:auto;transform:translateY(-50%);gap:12px}}
 .fl a{width:58px;height:58px;border-radius:50%;display:grid;place-items:center;font-size:22px;box-shadow:0 12px 24px -8px rgba(0,0,0,.4)}
 .fl .tel{background:var(--green);color:#fff}.fl .sms{background:var(--amber)}
-@media(max-width:600px){.pick{grid-template-columns:1fr}.fl{right:0;left:0;bottom:0;flex-direction:row;gap:0}.fl a{flex:1;border-radius:0;font-size:16px;font-weight:800}.fl .tel:after{content:"전화 상담"}.fl .sms:after{content:"문자 문의"}body{padding-bottom:58px}}
+@media(max-width:600px){.pick{grid-template-columns:1fr}.fl{right:14px;left:auto;top:50%;bottom:auto;transform:translateY(-50%);flex-direction:column;gap:12px}.fl a{width:54px;height:54px;border-radius:50%;font-size:22px;font-weight:800}}
 
 .flow{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:16px 0;padding:12px;background:#fff;border:1px solid var(--line);border-radius:12px}
 .flow span{background:var(--green-soft);color:var(--green-deep);font-weight:700;font-size:13px;padding:7px 12px;border-radius:999px;white-space:nowrap}
@@ -2275,9 +2275,8 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
 .fl .tel{background:var(--green);color:#fff}
 .fl .sms{background:var(--amber);color:var(--ink)}
 @media(max-width:600px){
-  .fl{right:0;left:0;bottom:0;flex-direction:row;gap:0}
-  .fl a{flex:1;border-radius:0;height:58px;font-size:16px;font-weight:800}
-  body{padding-bottom:58px}
+  .fl{right:14px;left:auto;top:50%;bottom:auto;transform:translateY(-50%);flex-direction:column;gap:12px}
+  .fl a{width:54px;height:54px;border-radius:50%;font-size:22px;font-weight:800}
 }
 @media(prefers-reduced-motion:no-preference){
   .dev.wired{animation:up .7s ease both}.dev.wireless{animation:up .7s .15s ease both}
