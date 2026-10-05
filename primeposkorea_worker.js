@@ -2783,7 +2783,9 @@ const __ua=request.headers.get("User-Agent")||"";if(!TG_BOT_RE.test(__ua)&&TG_LA
             .bind(SITE_KEY, b.type, (b.page||'').slice(0,300), (b.ref||'').slice(0,120), ip, ts, ...tkMeta(request.headers.get('User-Agent')||'', b.ref||'', SITE_HOST, b.q||"")).run();}}catch(e){}return new Response(JSON.stringify({ok:true}),{headers:{"Content-Type":"application/json","Access-Control-Allow-Origin":"*"}});}
     if(path==="/api/track"&&request.method==="OPTIONS")return new Response(null,{headers:{"Access-Control-Allow-Origin":"*","Access-Control-Allow-Methods":"POST,OPTIONS","Access-Control-Allow-Headers":"Content-Type"}});
     /* 정적 HTML 경로만 엣지 캐시를 조회한다 (/api/track 등은 제외) */
-    if(request.method === "GET" && (path === "/" || path === "/list" || path === "/region" || path === "/sitemap-regions" || path.startsWith("/region/"))){
+    /* 동 상세(/region/시도/구/동)는 URL 이 수천 개라 캐시가 거의 재사용되지 않아 조회·저장을 건너뛴다 (2026-10-07) */
+    const __dongPage = path.startsWith("/region/") && path.split("/").filter(Boolean).length === 4;
+    if(request.method === "GET" && !__dongPage && (path === "/" || path === "/list" || path === "/region" || path === "/sitemap-regions" || path.startsWith("/region/"))){
       const __hit = await cachedHtmlHit(request);
       if(__hit) return __hit;
     }
@@ -2826,7 +2828,7 @@ const __ua=request.headers.get("User-Agent")||"";if(!TG_BOT_RE.test(__ua)&&TG_LA
       const seg=path.slice(8).split("/").filter(Boolean);
       if(seg.length===1){ const p=renderSido(seg[0]); if(p) return htmlRespCached(request, ctx, p); }
       else if(seg.length===2){ const p=renderGugun(seg[0],seg[1]); if(p) return htmlRespCached(request, ctx, p); }
-      else if(seg.length===3){ const r=byDong.get(seg.join("/")); if(r) return htmlRespCached(request, ctx, renderDong(r)); }
+      else if(seg.length===3){ const r=byDong.get(seg.join("/")); if(r) return new Response(renderDong(r),{headers:{"cache-control":"public, max-age="+HTML_CACHE_SEC,"content-type":"text/html; charset=UTF-8"}}); }
     }
     return new Response("404 Not Found",{status:404,headers:{"content-type":"text/plain; charset=UTF-8"}});
   }
