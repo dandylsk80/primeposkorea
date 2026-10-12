@@ -329,7 +329,7 @@ function htmlResp(b){ return new Response(b,{headers:{"cache-control":"public, m
 const HTML_CACHE_SEC = 21600;
 /* 캐시 키에 버전을 붙인다. 본문을 고친 뒤 이 값을 올리면 이전 엣지 캐시가
    즉시 무시된다 (캐시 비우기 API 권한이 없어도 배포만으로 무효화된다). */
-const HTML_CACHE_VER = "19";   /* 2026-10-12 인물 사진 교체 */
+const HTML_CACHE_VER = "20";   /* 2026-10-12 og:image 1200×630 크롭본 */
 function edgeCache(){ return (typeof caches !== "undefined" && caches.default) ? caches.default : null; }
 function htmlCacheKey(request){
   try { const u = new URL(request.url); u.searchParams.set("_cv", HTML_CACHE_VER); return new Request(u.toString(), { method: "GET" }); }
@@ -393,6 +393,10 @@ const NAVER_WA=`<script type="text/javascript" src="//wcs.naver.net/wcslog.js"><
 const PHOTO_BASE = "https://cdn.jsdelivr.net/gh/dandylsk80/primeposkorea@main/image/";
 const PHOTO_IDS = [5239804,20051498,11316617,7561698,5835274,4968635,12920742,9304565,12920746,5239814,5239871,5239867,9122014,5849594,5239870,5239818,11009960,7621385,8657364,8834116,10330111,5239882,13466249,10330114,6023604,5242829,5239817,8554374,5239812,6023605,6684769,5239877,11344562,5239813,7621382,4968638,11412587,5242822,8657363,5836534,32559187,14490407,20117299,27605493,36964319,13926769,28272182,20843264,1137745,30948318,14490407,20434764,12784534,35901446,19723756,28272182,10940365,16563702,5864208,10940365,33233564,34654507,34654507,5849594,12920746,36964319,13466249,5239814,12784534,5239813,3933017,10376294,5414060,4473093,30948318,12920742,13926769,4473496,5836534,27605493,36724030,20843264,7621382,32559187,5409672,37937042,4921255,12935078,12935080,12935088,4921260,36724030,12935100,12935048,12935065,20434764,20117299,37594409,16563702,12935041];  /* 2026-10-12 외국인·동남아계 얼굴 사진 23자리 → 같은 저장소의 사람 없는 사진으로 치환(인덱스 유지 = 다른 페이지 배정 불변) */
 function photoUrl(seedStr){ const id=PHOTO_IDS[seedOf(seedStr)%PHOTO_IDS.length]; return PHOTO_BASE+"pexels-"+id+".jpg"; }
+/* og:image 전용 — 같은 사진을 1200×630 가운데 크롭한 JPG(og/p-{id}.jpg). 본문 사진은 원본 그대로. 사진 없는 페이지(/post)는 홈 사진 크롭본 */
+const OG_BASE = "https://cdn.jsdelivr.net/gh/dandylsk80/primeposkorea@main/og/";
+function ogUrl(u){ if(!u) u=photoUrl("home"); return u.indexOf(PHOTO_BASE+"pexels-")===0 ? OG_BASE+"p-"+u.slice((PHOTO_BASE+"pexels-").length) : u; }
+const OG_META_EXTRA = '<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:type" content="image/jpeg">';
 
 // =====================================================================
 //  지역 페이지 문단 풀 (_design/content_pool.js 인라인 — var 유지)
@@ -1971,7 +1975,7 @@ function shell({title,desc,canonical,ogimg,crumb,h1,metaArea,leadText,bodyMain,s
 <link rel="canonical" href="${canonical}">
 <meta property="og:type" content="website"><meta property="og:site_name" content="${SITE_NAME}"><meta property="og:title" content="${esc(title)}">
 <meta property="og:description" content="${esc(desc)}"><meta property="og:url" content="${canonical}">
-<meta property="og:image" content="${ogimg}"><meta name="naver-site-verification" content="a37c6cb31417a8289cdd72f99d49220cdf9f6b32"><meta name="msvalidate.01" content="411e58b67c684fb7b73b7d0115023da2">${HEAD_ICON}
+<meta property="og:image" content="${ogUrl(ogimg)}">${OG_META_EXTRA}<meta name="naver-site-verification" content="a37c6cb31417a8289cdd72f99d49220cdf9f6b32"><meta name="msvalidate.01" content="411e58b67c684fb7b73b7d0115023da2">${HEAD_ICON}
 <link href="https://fonts.googleapis.com/css2?family=Kaushan+Script&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <style>${REGION_STYLE}</style>
@@ -2130,7 +2134,7 @@ function renderHome(){
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${title}</title><meta name="description" content="${desc}"><link rel="canonical" href="${SITE}/">
 <meta name="naver-site-verification" content="a37c6cb31417a8289cdd72f99d49220cdf9f6b32"><meta name="msvalidate.01" content="411e58b67c684fb7b73b7d0115023da2">
-<meta property="og:type" content="website"><meta property="og:site_name" content="${SITE_NAME}"><meta property="og:title" content="${title}"><meta property="og:description" content="${desc}"><meta property="og:url" content="${SITE}/"><meta property="og:image" content="${ogimg}">
+<meta property="og:type" content="website"><meta property="og:site_name" content="${SITE_NAME}"><meta property="og:title" content="${title}"><meta property="og:description" content="${desc}"><meta property="og:url" content="${SITE}/"><meta property="og:image" content="${ogUrl(ogimg)}">${OG_META_EXTRA}
 <script type="application/ld+json">${JSON.stringify([
 {"@context":"https://schema.org","@type":"Organization","name":SITE_NAME,"alternateName":SITE_NAME_EN,"url":SITE+"/","logo":SITE+"/favicon.svg","description":"카드단말기·토스단말기 판매·설치 전문. 전국 지역별 빠른 설치, 설치비·가맹비·관리비 0원.","areaServed":"KR","contactPoint":{"@type":"ContactPoint","contactType":"sales","areaServed":"KR","availableLanguage":"Korean"}},
 {"@context":"https://schema.org","@type":"WebSite","name":SITE_NAME,"alternateName":SITE_NAME_EN,"url":SITE+"/"},
