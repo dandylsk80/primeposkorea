@@ -329,7 +329,7 @@ function htmlResp(b){ return new Response(b,{headers:{"cache-control":"public, m
 const HTML_CACHE_SEC = 21600;
 /* 캐시 키에 버전을 붙인다. 본문을 고친 뒤 이 값을 올리면 이전 엣지 캐시가
    즉시 무시된다 (캐시 비우기 API 권한이 없어도 배포만으로 무효화된다). */
-const HTML_CACHE_VER = "20";   /* 2026-10-12 og:image 1200×630 크롭본 */
+const HTML_CACHE_VER = "21";   /* 2026-10-12 og:image 1200×630 크롭본 */
 function edgeCache(){ return (typeof caches !== "undefined" && caches.default) ? caches.default : null; }
 function htmlCacheKey(request){
   try { const u = new URL(request.url); u.searchParams.set("_cv", HTML_CACHE_VER); return new Request(u.toString(), { method: "GET" }); }
@@ -1843,6 +1843,9 @@ function poolFaqList(slug,v){
 //  지역 페이지 디자인 (_design/primeposkorea-dong-sample.html)
 // =====================================================================
 const REGION_STYLE = `
+/* PC(769px~)는 전화를 걸 수 없으니 tel: 버튼을 숨기고 번호를 일반 텍스트로 보인다. 모바일은 그대로 */
+.telt{display:none}
+@media(min-width:769px){a[href^="tel:"]:not(.ch){display:none!important}.telt{display:inline-flex;align-items:center}.telt.htel{font-weight:800;font-size:15px;color:var(--green)}.telt.fabt{padding:10px 14px;border-radius:999px;background:var(--green);color:#fff;font-weight:800;font-size:14px;box-shadow:0 12px 24px -8px rgba(0,0,0,.4)}.telt.ctel{font-weight:800;font-size:17px}.telt.chtel{margin-top:10px;font-weight:800;font-size:16px;color:var(--green)}}
 :root{--ink:#17231E;--green:#1E5A3C;--green-deep:#12402A;--green-soft:#DDEBE2;--paper:#F5F6F2;--line:#D9DDD6;--mute:#5E6A63;--amber:#E9A62A;--amber-deep:#C9871A;--r:14px}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;color:var(--ink);background:var(--paper);line-height:1.75;font-size:16px;word-break:keep-all}
@@ -1929,13 +1932,13 @@ footer{padding:24px 0;font-size:13px;color:var(--mute);border-top:1px solid var(
 .child-list a:hover,.ar-gu2:hover,.sido-cell:hover{background:var(--green);color:#fff;border-color:var(--green)}
 `;
 
-const REGION_HEADER = `<header><div class="nav"><a class="logo" href="/"><span class="lp">PRIME</span><span class="ls">pos</span></a><a class="call" href="tel:${PHONE_RAW}">📞 전화 상담</a></div></header>`;
+const REGION_HEADER = `<header><div class="nav"><a class="logo" href="/"><span class="lp">PRIME</span><span class="ls">pos</span></a><a class="call" href="tel:${PHONE_RAW}">📞 전화 상담</a><span class="telt htel">📞 ${PHONE}</span></div></header>`;
 const REGION_FOOTER = `<footer><div class="wrap"><a href="/post/" style="color:inherit;text-decoration:underline">단말기 정보</a> · <a href="/list" style="color:inherit;text-decoration:underline">전체 목록</a><br>${SITE_NAME} · 상담 평일 09\u201318시 · 전화·문자 버튼으로 문의</div></footer>`;
-const REGION_FLOAT  = `<div class="fl"><a class="tel" href="tel:${PHONE_RAW}" aria-label="전화">📞</a><a class="sms" href="sms:${PHONE_RAW}" aria-label="문자">💬</a></div>`;
+const REGION_FLOAT  = `<div class="fl"><a class="tel" href="tel:${PHONE_RAW}" aria-label="전화">📞</a><span class="telt fabt">${PHONE}</span><a class="sms" href="sms:${PHONE_RAW}" aria-label="문자">💬</a></div>`;
 
 /* 상담 CTA — dong-sample 의 .cta 박스 */
 function ctaBox(label){
-  return `<div class="cta"><b>${esc(label)} 카드단말기 상담</b>손님이 어디서 계산하는지만 말씀해 주시면 맞는 단말기를 바로 알려드려요<div class="btns"><a class="btn btn-main" href="tel:${PHONE_RAW}">전화 걸기</a><a class="btn btn-line" href="sms:${PHONE_RAW}">문자 보내기</a></div></div>`;
+  return `<div class="cta"><b>${esc(label)} 카드단말기 상담</b>손님이 어디서 계산하는지만 말씀해 주시면 맞는 단말기를 바로 알려드려요<div class="btns"><a class="btn btn-main" href="tel:${PHONE_RAW}">전화 걸기</a><span class="telt ctel">전화 ${PHONE}</span><a class="btn btn-line" href="sms:${PHONE_RAW}">문자 보내기</a></div></div>`;
 }
 
 /* 본문 = 문단 풀. CTA 는 "매출 관리"(S9) 뒤 · "사용 중 문제 대응"(S10) 앞.
@@ -2144,6 +2147,9 @@ ${HEAD_ICON}
 <link href="https://fonts.googleapis.com/css2?family=Kaushan+Script&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <style>
+/* PC(769px~)는 전화를 걸 수 없으니 tel: 버튼을 숨기고 번호를 일반 텍스트로 보인다. 모바일은 그대로 */
+.telt{display:none}
+@media(min-width:769px){a[href^="tel:"]:not(.ch){display:none!important}.telt{display:inline-flex;align-items:center}.telt.htel{font-weight:800;font-size:15px;color:var(--green)}.telt.fabt{padding:10px 14px;border-radius:999px;background:var(--green);color:#fff;font-weight:800;font-size:14px;box-shadow:0 12px 24px -8px rgba(0,0,0,.4)}.telt.ctel{font-weight:800;font-size:17px}.telt.chtel{margin-top:10px;font-weight:800;font-size:16px;color:var(--green)}}
 :root{
   --ink:#17231E; --green:#1E5A3C; --green-deep:#12402A; --green-soft:#DDEBE2;
   --paper:#F5F6F2; --white:#fff; --line:#D9DDD6; --mute:#5E6A63;
@@ -2298,7 +2304,7 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
 <header><div class="wrap nav">
   <a class="logo" href="/"><span class="lp">PRIME</span><span class="ls">pos</span></a>
   <ul><li><a href="#why">서비스</a></li><li><a href="#how">신청 절차</a></li><li><a href="#region">지역별 설치</a></li><li><a href="#faq">자주 묻는 질문</a></li></ul>
-  <a class="call" href="tel:${PHONE_RAW}">📞 전화 상담</a>
+  <a class="call" href="tel:${PHONE_RAW}">📞 전화 상담</a><span class="telt htel">📞 ${PHONE}</span>
 </div></header>
 
 <section class="hero"><div class="wrap">
@@ -2306,8 +2312,8 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
   <h1>손님이 <em>어디서</em> 계산하세요?<br>그거 하나면 정해져요</h1>
   <p class="lead">기종 비교, 통신사 선택, 카드사 등록 — 사장님이 하실 건 없어요. 계산하는 자리만 골라주세요.</p>
   <div class="choose">
-    <a class="ch w" href="tel:${PHONE_RAW}" aria-label="유선 카드 → 전화"><span class="tag">유선</span><div class="q">손님이</div><div class="ico">🧍</div><h3>카운터로 와서 계산해요</h3><div class="ans">카운터에 두고 쓰는 유선 단말기 → 전화 상담</div></a>
-    <a class="ch m" href="tel:${PHONE_RAW}" aria-label="무선 카드 → 전화"><span class="tag">무선</span><div class="q">손님이</div><div class="ico">🪑</div><h3>자리에서 / 밖에서 계산해요</h3><div class="ans">들고 다니는 무선 단말기 → 전화 상담</div></a>
+    <a class="ch w" href="tel:${PHONE_RAW}" aria-label="유선 카드 → 전화"><span class="tag">유선</span><div class="q">손님이</div><div class="ico">🧍</div><h3>카운터로 와서 계산해요</h3><div class="ans">카운터에 두고 쓰는 유선 단말기 → 전화 상담</div><span class="telt chtel">📞 ${PHONE}</span></a>
+    <a class="ch m" href="tel:${PHONE_RAW}" aria-label="무선 카드 → 전화"><span class="tag">무선</span><div class="q">손님이</div><div class="ico">🪑</div><h3>자리에서 / 밖에서 계산해요</h3><div class="ans">들고 다니는 무선 단말기 → 전화 상담</div><span class="telt chtel">📞 ${PHONE}</span></a>
   </div>
   <div class="or">둘 다예요 / 잘 모르겠어요 → <a href="sms:${PHONE_RAW}">문자로 물어보기</a></div>
   <div class="promise"><span>관리비 없음</span><span>설치비 없음</span><span>가맹비 없음</span></div>
@@ -2392,7 +2398,7 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
   <h2>어떤 게 맞는지 3분이면 나와요</h2>
   <p class="lead" style="margin:0 auto">손님이 어디서 계산하는지만 말씀해 주세요. 나머지는 저희가 정리해 드릴게요.</p>
   
-  <div class="btns"><a class="btn btn-main" href="tel:${PHONE_RAW}">전화 걸기</a><a class="btn btn-line" href="sms:${PHONE_RAW}">문자 보내기</a></div>
+  <div class="btns"><a class="btn btn-main" href="tel:${PHONE_RAW}">전화 걸기</a><span class="telt ctel">전화 ${PHONE}</span><a class="btn btn-line" href="sms:${PHONE_RAW}">문자 보내기</a></div>
 </div></section>
 
 <footer><div class="wrap">
@@ -2402,7 +2408,7 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
 </div></footer>
 
 <div class="fl">
-  <a class="tel" href="tel:${PHONE_RAW}" aria-label="전화">📞<span class="m"></span></a>
+  <a class="tel" href="tel:${PHONE_RAW}" aria-label="전화">📞<span class="m"></span></a><span class="telt fabt">${PHONE}</span>
   <a class="sms" href="sms:${PHONE_RAW}" aria-label="문자">💬</a>
 </div>
 ${NAVER_WA}<script>(function(){var U="/api/track",S={},W=30000;function K(ty){return "tk_"+ty+"_"+location.pathname;}function seen(ty){var k=K(ty),n=Date.now();if(S[k]&&n-S[k]<W)return 1;try{var v=sessionStorage.getItem(k);if(v&&n-(+v)<W)return 1;}catch(e){}return 0;}function mark(ty){var k=K(ty),n=Date.now();S[k]=n;try{sessionStorage.setItem(k,""+n);}catch(e){}}function t(ty,b){try{var d=JSON.stringify({type:ty,page:location.pathname,ref:document.referrer,q:location.search,b:b||""}),ok=false;if(navigator.sendBeacon){try{ok=navigator.sendBeacon(U,new Blob([d],{type:"application/json"}));}catch(e){}}if(!ok){try{fetch(U,{method:"POST",headers:{"Content-Type":"application/json"},body:d,keepalive:true}).catch(function(){});}catch(e){}}}catch(e){}}function c(ty,b){if(seen(ty))return;mark(ty);t(ty,b);}function L(a){try{var s=(a.getAttribute&&a.getAttribute("aria-label"))||a.textContent||"";var o="",sp=0,i,ch;for(i=0;i<s.length;i++){ch=s.charCodeAt(i);if(ch===32||ch===9||ch===10||ch===13){if(!sp){o+=" ";sp=1;}}else{o+=s.charAt(i);sp=0;}}return o.trim().slice(0,40);}catch(e){return "";}}function WV(v){try{if(navigator.userAgent.indexOf("; wv)")<0)return;var i=v.indexOf(":");if(i<0)return;var sch=v.slice(0,i),num="",j,ch;if(sch!=="tel"&&sch!=="sms")return;for(j=i+1;j<v.length;j++){ch=v.charCodeAt(j);if(ch>=48&&ch<=57)num+=v.charAt(j);}if(!num)return;var sc=sch==="tel"?"tel":"smsto",ac=sch==="tel"?"DIAL":"SENDTO",done=0;var f=function(){done=1;};document.addEventListener("visibilitychange",f,{once:true});window.addEventListener("pagehide",f,{once:true});setTimeout(function(){if(done||document.visibilityState!=="visible")return;location.href="intent://"+num+"#Intent;scheme="+sc+";action=android.intent.action."+ac+";end";},800);}catch(e){}}function h(e,early){var a=e.target&&e.target.closest&&e.target.closest("a,button,[data-tk]");if(!a)return;var k=(a.getAttribute&&a.getAttribute("data-tk"))||"",v=(a.getAttribute&&a.getAttribute("href"))||"";if(!k&&!v&&a.closest){var p=a.closest("a[href]");if(p){a=p;v=p.getAttribute("href")||"";}}if(k==="tel"||v.indexOf("tel:")===0){c("tel",L(a));if(!early)WV(v);}else if(k==="sms"||v.indexOf("sms:")===0){c("sms",L(a));if(!early)WV(v);}else if(!early&&k==="contact")c("contact",L(a));}document.addEventListener("pointerdown",function(e){h(e,1);},true);document.addEventListener("click",function(e){h(e,0);},true);if(location.pathname.indexOf("/api/")!==0)t("view");})();</script></body></html>`;
