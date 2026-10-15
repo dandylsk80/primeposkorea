@@ -2529,7 +2529,7 @@ async function sitemap(request, ctx){
   const cache = (typeof caches !== "undefined" && caches.default) ? caches.default : null;
   /* 캐시 키에 글 버전을 붙인다 — 6시간 캐시가 새 글을 막지 않게 */
   let ckey = request;
-  try { const cu = new URL(request.url); cu.searchParams.set("_pv", postVer()); ckey = new Request(cu.toString(), { method: "GET" }); } catch(e){}
+  try { const cu = new URL(request.url); cu.searchParams.set("_pv", smVer()); ckey = new Request(cu.toString(), { method: "GET" }); } catch(e){}
   if(cache && request && request.method === "GET"){
     const hit = await cache.match(ckey);
     if(hit) return hit;
@@ -2706,6 +2706,9 @@ function postRssXml() {
 }
 /* 캐시 무효화 토큰 — 사이트맵을 Cache API 에 넣는 사이트는 키에 이 값을 붙인다.
    글이 늘거나 새로 발행되면 값이 바뀌어 하루짜리 캐시를 기다리지 않아도 된다. */
+/* 사이트맵 캐시 키용 버전(2026-10-16) — 글(postVer) + 시군구·동 수·사진 수. 새 유형이 배포되면 키가 바뀌어 6시간 캐시가 즉시 무효 */
+function smVer(){ const M=function(m){ try{ let t=0; for(const [,a] of m) t+=a.length; return t; }catch(e){ return 0; } };
+  return postVer()+"-"+[(typeof gugunOf!=="undefined"?M(gugunOf):0),(typeof dongOf!=="undefined"?M(dongOf):0),(typeof PHOTO_IDS!=="undefined"?PHOTO_IDS.length:0)].join("."); }
 function postVer() {
   const ps = POSTS_CACHE.rows || [];
   return ps.length ? ps.length + "-" + postDate(ps[0]) : "0";
