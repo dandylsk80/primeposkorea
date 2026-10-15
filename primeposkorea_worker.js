@@ -2784,13 +2784,13 @@ export default {
     if((request.method==="GET"||request.method==="HEAD") && url.hostname!==SITE_HOST && !path.startsWith("/api/")){
       return new Response(null,{status:301,headers:{"location":SITE+path+url.search,"cache-control":"public, max-age=3600"}});
     }
-    if(path==="/api/track"&&request.method==="POST"){try{const b=await request.json();
+    if(path==="/api/track"&&request.method==="POST"){try{const b=await request.json(); const __task=(async()=>{ try{
     /* 같은 방문자가 같은 버튼을 반복해 눌러도 1건만 기록·발송한다 */
     if (await tkDup(env, SITE_KEY, b.type, (b.page || '').slice(0, 300), request.headers.get('CF-Connecting-IP') || '')) {
       return new Response(JSON.stringify({ ok: true, dup: 1 }), { headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*' } });
     }
 const __ua=request.headers.get("User-Agent")||"";if(!TG_BOT_RE.test(__ua)&&TG_LABEL[b.type]){const __tg=tgNotify(env, b.type,(b.page||"/").slice(0,300),b.ref||"",__ua, String(b.b || "").slice(0, 40), b.q||"");if(ctx&&ctx.waitUntil)ctx.waitUntil(__tg);else await __tg;}const ip=request.headers.get("CF-Connecting-IP")||"";const ts=new Date().toISOString();if(env&&env.DB&&!(b.type==="view"&&BOT_UA_RE.test(request.headers.get("User-Agent")||"")||(b.type==="view"&&skipViewCf(request, request.headers.get("CF-Connecting-IP")||"")))&&(b.type==="tel"||b.type==="sms"||b.type==="contact"||b.type==="view")){const __ev=env.DB.prepare('INSERT INTO events (site,type,page,ref,ip,ts,ua,device,source,keyword) VALUES (?,?,?,?,?,?,?,?,?,?)')
-            .bind(SITE_KEY, b.type, (b.page||'').slice(0,300), (b.ref||'').slice(0,120), ip, ts, ...tkMeta(request.headers.get('User-Agent')||'', b.ref||'', SITE_HOST, b.q||"")).run().catch(function(e){ console.log('[track] D1 insert fail', e&&e.message); }); if(ctx&&ctx.waitUntil) ctx.waitUntil(__ev); else await __ev;}}catch(e){}return new Response(JSON.stringify({ok:true}),{headers:{"Content-Type":"application/json","Access-Control-Allow-Origin":"*"}});}
+            .bind(SITE_KEY, b.type, (b.page||'').slice(0,300), (b.ref||'').slice(0,120), ip, ts, ...tkMeta(request.headers.get('User-Agent')||'', b.ref||'', SITE_HOST, b.q||"")).run().catch(function(e){ console.log('[track] D1 insert fail', e&&e.message); }); if(ctx&&ctx.waitUntil) ctx.waitUntil(__ev); else await __ev;}}catch(e){ console.log('[track] fail', e&&e.message); } })(); if(ctx&&ctx.waitUntil) ctx.waitUntil(__task); else await __task; }catch(e){}return new Response(JSON.stringify({ok:true}),{headers:{"Content-Type":"application/json","Access-Control-Allow-Origin":"*"}});}
     if(path==="/api/track"&&request.method==="OPTIONS")return new Response(null,{headers:{"Access-Control-Allow-Origin":"*","Access-Control-Allow-Methods":"POST,OPTIONS","Access-Control-Allow-Headers":"Content-Type"}});
     /* 정적 HTML 경로만 엣지 캐시를 조회한다 (/api/track 등은 제외) */
     /* 동 상세(/region/시도/구/동)는 URL 이 수천 개라 캐시가 거의 재사용되지 않아 조회·저장을 건너뛴다 (2026-10-07) */
