@@ -1,3 +1,14 @@
+/* 2026-10-30 IndexNow 일시 중지(네이버·Bing·yandex 전부) — KST 11/3 까지, 11/4 00:00 KST 부터 자동 재개(네이버는 계속 꺼짐).
+   제출 함수가 사이트마다 달라 이 모듈의 fetch 를 한 곳에서 거른다. IndexNow 엔드포인트만 막고 나머지 요청·사이트맵은 그대로. */
+const INDEXNOW_PAUSE_UNTIL = Date.parse("2026-11-03T15:00:00Z");
+const INDEXNOW_HOST_RE = /^https:\/\/(api\.indexnow\.org|(www\.)?bing\.com|yandex\.com|search\.seznam\.cz|searchadvisor\.naver\.com)\/indexnow/;
+const fetch = (input, init) => {
+  const u = typeof input === "string" ? input : (input && input.url) || "";
+  if (Date.now() < INDEXNOW_PAUSE_UNTIL && INDEXNOW_HOST_RE.test(u))
+    return Promise.resolve(new Response("IndexNow paused until 2026-11-03 KST", { status: 503 }));
+  return globalThis.fetch(input, init);
+};
+
 function reEsc(x){ return x.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"); }
 /* 이름 뒤 조사를 받침에 맞게 고른다 (danmalgi 검증본을 13개 공통으로 사용) */
 function josaFor(word,j){
