@@ -2624,9 +2624,7 @@ function llms(){
 
 function robots(){
   const aiBots=["GPTBot","OAI-SearchBot","ChatGPT-User","PerplexityBot","Perplexity-User","ClaudeBot","Claude-Web","anthropic-ai","Google-Extended","Applebot-Extended","Amazonbot","CCBot","cohere-ai","Meta-ExternalAgent","YouBot","Diffbot","Yeti"];
-  const blockBots=["SemrushBot","AhrefsBot","AhrefsSiteAudit","MJ12bot","DotBot","DataForSeoBot","BLEXBot","rogerbot","SEOkicks","Barkrowler","serpstatbot"];
-  const allow = aiBots.map(b=>`User-agent: ${b}\nAllow: /\n`+(b==="GPTBot"?"Crawl-delay: 10\n":"")).join("")
-    + "# SEO 분석 크롤러 — 색인에 도움 안 되므로 차단\n" + blockBots.map(b=>`User-agent: ${b}\nDisallow: /\n`).join("");
+  const allow = aiBots.map(b=>`User-agent: ${b}\nAllow: /\n`+(b==="GPTBot"?"Crawl-delay: 10\n":"")).join("");
   const body=`${allow}User-agent: *\nAllow: /\n\n# llms.txt: ${SITE}/llms.txt\nLlms-txt: ${SITE}/llms.txt\n# 전체 목록: ${SITE}/list\nSitemap: ${SITE}/sitemap.xml\n#DaumWebMasterTool:d4555c0d476213ff4adef8948fce53b94ee1be496d20cf8d7a1d83cfe527fda4:FreFgz7Szjm9AAoTfEznAQ==\n`;
   return new Response(body,{headers:{"content-type":"text/plain; charset=UTF-8"}});
 }
