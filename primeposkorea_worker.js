@@ -341,7 +341,10 @@ async function tgNotify(env, type, page, ref, ua, btn,qs) {
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 function seedOf(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
 const BIWEEK = 14*864e5;
-function modDate(){ return new Date(Math.floor(Date.now()/BIWEEK)*BIWEEK); }
+/* 2026-11-20: 날짜 자동 회전 중지 — 실제 수정 없이 바뀌던 수정일·lastmod·RSS 날짜를 이 시점 값으로 고정한다(지금 값 그대로, 앞으로 안 바뀜).
+   실제로 고친 페이지는 shell({fixedDate}) 처럼 그 날짜를 직접 넣는다. */
+const DATE_FREEZE = Date.parse("2026-11-20T00:00:00Z");
+function modDate(){ return new Date(Math.floor(DATE_FREEZE/BIWEEK)*BIWEEK); }
 function pubDate(seedStr){ return new Date(Date.parse("2025-08-04") + (seedOf(seedStr)%140)*864e5); }
 function ymd(d){ return d.toISOString().slice(0,10); }
 function ymdK(d){ const p=ymd(d).split("-"); return p[0]+"."+p[1]+"."+p[2]; }
@@ -352,7 +355,7 @@ function htmlResp(b){ return new Response(b,{headers:{"cache-control":"public, m
 const HTML_CACHE_SEC = 21600;
 /* 캐시 키에 버전을 붙인다. 본문을 고친 뒤 이 값을 올리면 이전 엣지 캐시가
    즉시 무시된다 (캐시 비우기 API 권한이 없어도 배포만으로 무효화된다). */
-const HTML_CACHE_VER = "23";   /* 2026-11-20 이름 맞춤·/wireless-terminal/ */
+const HTML_CACHE_VER = "24";   /* 2026-11-20 이름 맞춤·/wireless-terminal/ */
 /* /img/<p|a|b|og>/<파일> — 사진 자체 서빙(2026-10-16): jsDelivr 간헐 503 대비. 허용 목록 → Cache API(IMG_VER) → GitHub raw → jsDelivr 폴백 → 1년 immutable.
    p = primeposkorea image/ · a = 24payshop image/ · b = 365posmall image/ · og = primeposkorea og/ */
 const IMG_VER="1";
@@ -2449,6 +2452,7 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
       <ul><li>LTE·와이파이, 선 없이 씀</li><li>테이블·배달·출장 현장에서 결제</li><li>한 번 충전에 하루 종일</li><li>영수증·현금영수증 바로 출력</li></ul>
       <div class="fit"><b>이럴 때</b> — 자리에서 받거나 밖에서 받는 가게</div></div>
   </div>
+  <p class="lead">들고 다니며 결제하실 거라면 <a href="/wireless-terminal/" style="color:var(--green);font-weight:700;text-decoration:underline">무선·휴대용 카드단말기와 토스단말기 비교</a>를 먼저 보세요. 가격과 통신 방식, 개통 순서를 정리해 두었어요.</p>
 </div></section>
 
 <section class="why" id="why"><div class="wrap">
@@ -2591,14 +2595,14 @@ const SM_DAY = 86400000, SM_PERIOD = 18;
 function smHash(str){ let h=5381; const s=String(str); for(let i=0;i<s.length;i++) h=((h<<5)+h+s.charCodeAt(i))>>>0; return h; }
 function smLastmod(key){
   const off = smHash(key) % SM_PERIOD;
-  const periods = Math.floor((Date.now()/SM_DAY - off)/SM_PERIOD);
+  const periods = Math.floor((DATE_FREEZE/SM_DAY - off)/SM_PERIOD);   /* 고정(회전 중지) */
   return new Date((periods*SM_PERIOD + off)*SM_DAY).toISOString().slice(0,10);
 }
 /* RSS 정렬용 날짜: URL 마다 60일 주기로 밀린다. 매일 다른 1/60 묶음이 최신이 되어
    "최근 항목 위주"를 유지하면서 피드가 날마다 바뀐다. */
 function rssRankDate(u){
   const off = smHash(u) % 60;
-  const periods = Math.floor((Date.now()/SM_DAY - off)/60);
+  const periods = Math.floor((DATE_FREEZE/SM_DAY - off)/60);   /* 고정(회전 중지) */
   return new Date((periods*60 + off)*SM_DAY);
 }
 /* <loc> 뒤에 lastmod 가 없으면 채워 넣는다 (loc → lastmod → changefreq → priority 순서 유지) */
