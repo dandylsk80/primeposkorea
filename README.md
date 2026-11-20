@@ -3,6 +3,7 @@
 프라임포스 — 전국 카드단말기 판매·설치 안내 (Cloudflare Workers).
 
 - 워커: `primeposkorea_worker.js` (wrangler name `primeposkorea`)
+- 배포 전 검사: `node check.mjs` (공용 ../sites-tools/check.mjs + 금액 규칙: 확정 금액은 /wireless-terminal/·llms.txt 에서만, 대표 페이지·홈 lastmod 실제 날짜). Actions 에서도 배포 전에 돈다
 - 배포: main 푸시 → GitHub Actions (`wrangler deploy --no-bundle`)
 - 사이트명·도메인 상수: `primeposkorea_worker.js` 상단 `SITE_NAME` / `SITE`
 - 통계 D1: 공용 `allcare_stats`, `events.site = primeposkorea`

@@ -9,6 +9,8 @@ jobs:
     name: Deploy
     steps:
       - uses: actions/checkout@v7
+      - name: 배포 전 검사(금액·대표 페이지)
+        run: node check.mjs
       - name: Deploy
         uses: cloudflare/wrangler-action@v4
         with:
