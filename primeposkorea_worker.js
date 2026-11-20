@@ -2633,7 +2633,7 @@ async function sitemap(request, ctx){
   const cache = (typeof caches !== "undefined" && caches.default) ? caches.default : null;
   /* 캐시 키에 글 버전을 붙인다 — 6시간 캐시가 새 글을 막지 않게 */
   let ckey = request;
-  try { const cu = new URL(request.url); cu.searchParams.set("_pv", smVer()); ckey = new Request(cu.toString(), { method: "GET" }); } catch(e){}
+  try { const cu = new URL(request.url); cu.searchParams.set("_pv", smVer()); cu.searchParams.set("_cv", HTML_CACHE_VER); /* 배포 버전이 바뀌면 사이트맵도 새로 */ ckey = new Request(cu.toString(), { method: "GET" }); } catch(e){}
   if(cache && request && request.method === "GET"){
     const hit = await cache.match(ckey);
     if(hit) return hit;
